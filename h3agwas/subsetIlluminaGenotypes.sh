@@ -19,26 +19,39 @@
 #   Finally, it then uses these to subset the genotype reports so that
 #   the output data set is fully consistent and operational with plink.
 #
+#  Usage:
+#
+#  $ ./subsetIlluminaGenotypes.sh -n<samples> -p<snvs> -i <input> -o <output>
+#
+#    where:
+#        <samples>: number of samples in output subset
+#        <snvs>: number of snvs in output subset
+#        <input>: input files prefix
+#        <output>: output files prefix
+#
+#    The output files will be put in a folder data-subset (you don't
+#    need to create this folder) in the folder where the script is run.
+#    for that reason please don't put directory names in the output
+#    prefix.
+#
+#    example:
+#
+#    $ ./subsetIlluminaGenotypes.sh -n15 -p150 -i WTS_H3Africa_Wonkam_2018.04 -o subset
 #
 #######################################################################
-
-#
-#   Input arguments
-#
-
-number_of_genotype_reports=10
-number_of_samples_in_subset=100
-number_of_snvs_in_subset=1000
-input_data_prefix='WTS_H3Africa_Wonkam_2018.04'
-output_data_prefix=''
 
 #
 #   Workflow definition
 #
 
 function workflow {
+    local argv=("$@")
 
     custom_call prepare_workspace || { exit 1; }
+
+    custom_call get_arguments_from_command_line "${argv[@]}" || { exit 1; }
+
+    custom_call get_number_of_input_genotype_reports || { exit 1; }
 
     custom_call get_random_subset_of_sample_report || { exit 1; }
 
@@ -59,7 +72,7 @@ function custom_call {
     local method=$1
     shift
 
-    printf "running *$method* with arguments ("$@")..."
+    printf "running *$method*..."
     if $method "$@" ; then
         echo "...done"
     else
@@ -73,6 +86,43 @@ function prepare_workspace {
     mkdir -p temp
 }
 
+function get_arguments_from_command_line {
+
+    # set default values
+    number_of_samples_in_subset=100
+    number_of_snvs_in_subset=1000
+
+    while getopts "i:o:n:p:" opt; do
+        case $opt in
+            i) input_data_prefix="$OPTARG"
+            ;;
+            o) output_data_prefix="$OPTARG"
+            ;;
+            n) number_of_samples_in_subset="$OPTARG"
+            ;;
+            p) number_of_snvs_in_subset="$OPTARG"
+            ;;
+            \?) echo "Invalid option -$OPTARG" >&2
+            exit 1
+            ;;
+        esac
+
+        case $OPTARG in
+            -*) echo "Option $opt needs a valid argument"
+            exit 1
+            ;;
+        esac
+    done
+
+    echo ""
+    echo "reading data from ${input_data_prefix}* and writing out to ${output_data_prefix}*"
+    echo "subsetting data with ${number_of_samples_in_subset} samples and ${number_of_snvs_in_subset} snvs in the output subset"
+}
+
+function get_number_of_input_genotype_reports {
+
+    number_of_genotype_reports=$(ls ${input_data_prefix}_gtReport* | wc -l)
+}
 
 function get_random_subset_of_sample_report {
 
@@ -237,4 +287,4 @@ function clean_temporary_files {
 #   Run the workflow
 #
 
-workflow
+workflow "$@"
