@@ -14,7 +14,13 @@
 #   The separator/deliminator need not be a space, but it does need to 
 #   be the same for both the data file and the dictionary file (and will
 #   be the same for the output). The output is terminal standard out, 
-#   so you might want to redirect it to a file, i.e. with '>'.
+#   so you might want to redirect it to a file, i.e. with '>'. To change
+#   the input file delimiter, change the value of the SEPARATOR variable
+#   below before you run.
+#
+#   Note!! make sure to check whether the input file delimiter is a tab
+#   or a space! it does make a difference and if you are inconsistent 
+#   between the dictionary and the input fam/cov file you will get errors!
 #
 #   To get the dictionary for an Illumina sample report, just use:
 #
